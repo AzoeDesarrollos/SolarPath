@@ -77,8 +77,8 @@ current_day = 0
 solar_time_total = -pi  # tiempo solar continuo
 current_time = -pi  # ángulo horario actual
 
-time_speed = 0.03
-day_speed = 1
+# time_speed = 0.03
+# day_speed = 1
 
 show_arc = False
 path = []
@@ -94,18 +94,13 @@ while True:
             if e.key == K_a:
                 show_arc = not show_arc
             elif e.key == K_SPACE:
-                if time_speed > 0:
-                    time_speed = 0
-                    day_speed = 0
-                else:
-                    time_speed = 0.03
-                    day_speed = 1
+                planet_time.toggle_pause()
             elif e.key == K_UP:
                 latitude_deg = min(90, latitude_deg + 1)
-                phi = get_phi(latitude_deg)
+                # phi = get_phi(latitude_deg)
             elif e.key == K_DOWN:
                 latitude_deg = max(-90, latitude_deg - 1)
-                phi = get_phi(latitude_deg)
+                # phi = get_phi(latitude_deg)
             elif e.key == K_r:
                 planet_time.toggle_mode()
     # Línea del horizonte
@@ -163,22 +158,21 @@ while True:
     screen.blit(info_text, (10, height - 60))
     screen.blit(pause_text, (10, height - 30))
 
-    display.flip()
+    display.update()
 
     # ------ ACTUALIZAR TIEMPO CORRECTAMENTE ------
-    # solar_time_total += time_speed
-    # current_time = ((solar_time_total + math.pi) % (2 * math.pi)) - math.pi
+    solar_time_total += planet_time.time_speed
+    current_time = ((solar_time_total + pi) % (2 * pi)) - pi
 
-    # if solar_time_total >= math.pi:
-    #     solar_time_total -= 2 * math.pi
-    #     current_day += day_speed
-    #     if current_day > orbital_period:
-    #         current_day = 0
-    #     path.clear()
+    if solar_time_total >= pi:
+        solar_time_total -= 2 * pi
+        current_day += 1
+        if current_day > orbital_period:
+            current_day = 0
+        path.clear()
 
     delta_time = clock.tick(60) / 1000
     planet_time.update(delta_time)
 
-    hour_angle = planet_time.get_hour_angle()
-    current_day = planet_time.get_current_day()
-    # print(current_day)/
+    # hour_angle = planet_time.get_hour_angle()
+    # current_day = planet_time.get_current_day()

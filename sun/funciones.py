@@ -1,7 +1,9 @@
 from math import sqrt, sin, cos, tan, asin, acos, atan2, radians, pi
 
+
 def get_phi(latitude_deg):
     return radians(latitude_deg)
+
 
 def mean_anomaly(day_frac):
     return 2 * pi * day_frac
@@ -30,7 +32,8 @@ def declination(ls, obliquity_rad):
 
 def solar_altitude(latitude, hour_angle, decl):
     phi = radians(latitude)
-    return asin(sin(phi) * sin(decl) + cos(phi) * cos(decl) * cos(hour_angle))
+    return_value = asin(sin(phi) * sin(decl) + cos(phi) * cos(decl) * cos(hour_angle))
+    return return_value
 
 
 def solar_azimuth(latitude, hour_angle, decl, altitude):
@@ -51,6 +54,7 @@ def get_solar_xy(latitude, hour_angle, decl):
     x = cos(alt) * sin(az)
     y = sin(alt)
     return x, y
+
 
 __all__ = [
     "get_phi",
