@@ -1,7 +1,5 @@
 from pygame import init as pg_init, quit as pg_quit, display, time, font, draw, event
-from pygame import KEYDOWN, QUIT, K_SPACE, K_a, K_r, K_UP, K_DOWN, K_ESCAPE
-
-from sun.funciones import normalize_latitude
+from pygame import KEYDOWN, KEYUP, QUIT, K_SPACE, K_a, K_r, K_UP, K_DOWN, K_RIGHT, K_LEFT, K_ESCAPE
 from sun.planet_time import PlanetTime
 from math import radians, degrees, pi
 from sun.funciones import *
@@ -9,6 +7,7 @@ from sys import exit
 
 # -------- Parámetros del planeta y observador --------
 latitude_deg = -34
+longitude_deg = 0
 obliquity_deg = 23.44
 eccentricity = 0.0167
 orbital_period = 365.25
@@ -55,15 +54,17 @@ def draw_dynamic_sky(surface, altura):
         bottom = interpolate_color((255, 120, 60), (180, 220, 255), mix)
     else:
         top, bottom = (100, 160, 255), (180, 220, 255)
-    for dy in range(height):
+    for cy in range(height):
         ratio = dy / height
         r = int(top[0] * (1 - ratio) + bottom[0] * ratio)
         g = int(top[1] * (1 - ratio) + bottom[1] * ratio)
         b = int(top[2] * (1 - ratio) + bottom[2] * ratio)
-        draw.line(surface, (r, g, b), (0, dy), (width, dy))
+        draw.line(surface, (r, g, b), (0, cy), (width, cy))
 
 
 # -------- Bucle principal --------
+delta_time = 0
+dx, dy = 0, 0  # velocidad horizontal y vertical, respectivamente
 while True:
     for e in event.get():
         if (e.type == KEYDOWN and e.key == K_ESCAPE) or e.type == QUIT:
@@ -77,9 +78,36 @@ while True:
             elif e.key == K_r:
                 planet_time.toggle_mode()
             elif e.key == K_UP:
-                latitude_deg += 1
+                dy += 1
             elif e.key == K_DOWN:
-                latitude_deg -= 1
+                dy -= 1
+            elif e.key == K_RIGHT:
+                dx += 1
+            elif e.key == K_LEFT:
+                dx -= 1
+
+        elif e.type == KEYUP:
+            if e.key in (K_UP, K_DOWN):
+                dy = 0
+            elif e.key in (K_LEFT, K_RIGHT):
+                dx = 0
+    # if dy != 0 and (ghost_mode or planet_time.time_speed > 0):
+    #     latitude_deg += dy * lat_speed
+    latitude_deg += dy * 10 * delta_time  # 20 grados por segundo ajustable
+
+    # Asegurar latitud en rango -180 a +180 con rollover
+    if latitude_deg > 180:
+        latitude_deg -= 360
+    elif latitude_deg < -180:
+        latitude_deg += 360
+
+    # longitude_deg += dx * 10 * delta_time  # 20 grados por segundo ajustable
+
+    # # Asegurar latitud en rango -180 a +180 con rollover
+    # if latitude_deg > 180:
+    #     latitude_deg -= 360
+    # elif latitude_deg < -180:
+    #     latitude_deg += 360
 
     horizon_y = center_y
     font_large = font.SysFont(None, 28)
@@ -122,8 +150,6 @@ while True:
                     line_color=[100, 150, 200], num_longitudinal=30,
                     apertura_ancho=800, divergence_factor=10)
 
-    # draw_latitude_perspective_lines(screen, horizon_y, width, height, center_x,
-    #                                 line_color=(100, 150, 200), num_lines=10)
     screen.blit(east_text, (width - 70, horizon_y + 10))
     screen.blit(west_text, (10, horizon_y + 10))
 
@@ -133,12 +159,6 @@ while True:
     hours = int(solar_hour)
     minutes = int((solar_hour - hours) * 60)
     abs_lat = abs(latitude_deg % 360)
-    # if abs_lat <= 90:
-    #     lat_display = latitude_deg
-    # elif abs_lat <= 180:
-    #     lat_display = 180 - abs_lat
-    # else:
-    #     lat_display = abs_lat - 180
     lat_display = normalize_latitude(latitude_deg)
     day_text = fuente.render(f"Día del año: {current_day} / {int(orbital_period)}", True, (255, 255, 255))
     time_text = fuente.render(f"Hora solar: {hours:02d}:{minutes:02d}", True, (255, 255, 255))

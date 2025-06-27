@@ -84,15 +84,7 @@ def calc_fuga_x(center_x, fuga_width, i, total_lines):
 def draw_mode7_grid(surface, screen_width, screen_height, center_x, horizon_y, latitude_deg,
                     line_color, num_longitudinal=20, num_latitudinal=180,
                     apertura_ancho=400, divergence_factor=1.5):
-    """
-    Dibuja una cuadrícula con:
-    - Líneas longitudinales que convergen hacia una 'línea de fuga' horizontal sobre el horizonte
-      (líneas paralelas en el horizonte).
-    - Líneas latitudinales horizontales con espaciamiento creciente lineal para efecto perspectiva,
-      que se extienden hacia arriba y hacia abajo desde una línea base móvil según la latitud.
-    """
-
-    # --- Líneas longitudinales (sin cambio) ---
+    # --- Líneas longitudinales (sin cambios) ---
     x_start_linea_fuga = center_x - apertura_ancho / 2
     separacion_lineas = apertura_ancho / num_longitudinal
 
@@ -106,28 +98,22 @@ def draw_mode7_grid(surface, screen_width, screen_height, center_x, horizon_y, l
         draw.line(surface, line_color, (x_start, y_start), (x_end, y_end), 1)
 
     # --- Líneas latitudinales ---
-    lat_factor = (latitude_deg + 90) / 180  # 0 a 1
+    # Definir espaciado fijo entre líneas
+    spacing = 20  # espaciado constante, NO creciente
 
-    max_shift = 400  # px rango para desplazar línea base arriba/abajo
+    # Convertir latitud a factor de desplazamiento
+    lat_factor = (latitude_deg + 90) / 180  # de 0 (sur) a 1 (norte)
+    max_shift = 400
+    shift = (lat_factor - 0.5) * 2 * max_shift  # -400 a +400
 
-    # Línea base para las latitudinales, se mueve según latitud
-    base_y = horizon_y - lat_factor * max_shift
+    # Centrar la grilla en la línea del horizonte + shift
+    base_y = horizon_y + shift
 
-    # Espaciado inicial y escalado lineal para efecto perspectiva
-    spacing = 10
-    spacing_increment = 2  # cambio lineal en cada paso
-
-    # Dibujar líneas hacia abajo desde base_y
-    y = base_y
-    lines_drawn = 0
-    for _ in range(num_latitudinal):
+    # Generar muchas líneas alrededor de base_y, hacia arriba y abajo
+    for i in range(-num_latitudinal // 2, num_latitudinal // 2 + 1):
+        y = base_y + i * spacing
         if horizon_y <= y <= screen_height:
             draw.line(surface, line_color, (0, y), (screen_width, y), 2)
-            lines_drawn += 1
-        spacing += spacing_increment
-        y += spacing
-        if y > screen_height:
-            break
 
 
 
@@ -153,5 +139,6 @@ __all__ = [
     "equation_of_time",
     "small_angle_approximation",
     "equation_of_time_hours",
-    "draw_mode7_grid"
+    "draw_mode7_grid",
+    "normalize_latitude"
 ]
