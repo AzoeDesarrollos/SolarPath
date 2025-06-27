@@ -1,5 +1,7 @@
 from pygame import init as pg_init, quit as pg_quit, display, time, font, draw, event
 from pygame import KEYDOWN, QUIT, K_SPACE, K_a, K_r, K_UP, K_DOWN, K_ESCAPE
+
+from sun.funciones import normalize_latitude
 from sun.planet_time import PlanetTime
 from math import radians, degrees, pi
 from sun.funciones import *
@@ -75,9 +77,9 @@ while True:
             elif e.key == K_r:
                 planet_time.toggle_mode()
             elif e.key == K_UP:
-                latitude_deg = min(90, latitude_deg + 1)
+                latitude_deg += 1
             elif e.key == K_DOWN:
-                latitude_deg = max(-90, latitude_deg - 1)
+                latitude_deg -= 1
 
     horizon_y = center_y
     font_large = font.SysFont(None, 28)
@@ -117,7 +119,7 @@ while True:
     draw.rect(screen, (0, 200, 100), (0, horizon_y, width, horizon_y))
     num_lines = max(1, time.get_ticks() // 10 % (height // 20))
     draw_mode7_grid(screen, width, height, center_x, horizon_y, latitude_deg,
-                    line_color=[100, 150, 200], num_longitudinal=30, num_latitudinal=30,
+                    line_color=[100, 150, 200], num_longitudinal=30,
                     apertura_ancho=800, divergence_factor=10)
 
     # draw_latitude_perspective_lines(screen, horizon_y, width, height, center_x,
@@ -130,10 +132,17 @@ while True:
     solar_hour = solar_hour % 24
     hours = int(solar_hour)
     minutes = int((solar_hour - hours) * 60)
-
+    abs_lat = abs(latitude_deg % 360)
+    # if abs_lat <= 90:
+    #     lat_display = latitude_deg
+    # elif abs_lat <= 180:
+    #     lat_display = 180 - abs_lat
+    # else:
+    #     lat_display = abs_lat - 180
+    lat_display = normalize_latitude(latitude_deg)
     day_text = fuente.render(f"Día del año: {current_day} / {int(orbital_period)}", True, (255, 255, 255))
     time_text = fuente.render(f"Hora solar: {hours:02d}:{minutes:02d}", True, (255, 255, 255))
-    lat_text = fuente.render(f"Latitud: {latitude_deg:.1f}°", True, (255, 255, 255))
+    lat_text = fuente.render(f"Latitud: {lat_display:.1f}°", True, (255, 255, 255))
     mode_text = fuente.render(f"Modo: {'Real' if planet_time.real_time_mode else 'Simulado'}", True, (255, 255, 255))
     screen.blit(day_text, (10, 10))
     screen.blit(time_text, (10, 40))

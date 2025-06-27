@@ -39,6 +39,7 @@ def declination(ls, obliquity_rad):
 
 
 def solar_altitude(latitude, hour_angle, decl):
+    latitude = normalize_latitude(latitude)
     phi = radians(latitude)
     return_value = asin(sin(phi) * sin(decl) + cos(phi) * cos(decl) * cos(hour_angle))
     return return_value
@@ -87,7 +88,7 @@ def draw_mode7_grid(surface, screen_width, screen_height, center_x, horizon_y, l
     Dibuja una cuadrícula con:
     - Líneas longitudinales que convergen hacia una 'línea de fuga' horizontal sobre el horizonte
       (líneas paralelas en el horizonte).
-    - Líneas latitudinales horizontales con espaciamiento creciente para efecto perspectiva,
+    - Líneas latitudinales horizontales con espaciamiento creciente lineal para efecto perspectiva,
       que se extienden hacia arriba y hacia abajo desde una línea base móvil según la latitud.
     """
 
@@ -107,24 +108,38 @@ def draw_mode7_grid(surface, screen_width, screen_height, center_x, horizon_y, l
     # --- Líneas latitudinales ---
     lat_factor = (latitude_deg + 90) / 180  # 0 a 1
 
-    max_shift = 150  # px rango para desplazar línea base arriba/abajo
+    max_shift = 400  # px rango para desplazar línea base arriba/abajo
 
     # Línea base para las latitudinales, se mueve según latitud
     base_y = horizon_y - lat_factor * max_shift
 
-    # Espaciado inicial y escalado para efecto perspectiva
+    # Espaciado inicial y escalado lineal para efecto perspectiva
     spacing = 10
+    spacing_increment = 2  # cambio lineal en cada paso
 
     # Dibujar líneas hacia abajo desde base_y
     y = base_y
     lines_drawn = 0
     for _ in range(num_latitudinal):
-        if y >= horizon_y:  # evitar líneas arriba del horizonte para estas
+        if horizon_y <= y <= screen_height:
             draw.line(surface, line_color, (0, y), (screen_width, y), 2)
             lines_drawn += 1
-        spacing *= 1.15
+        spacing += spacing_increment
         y += spacing
+        if y > screen_height:
+            break
 
+
+
+def normalize_latitude(lat):
+    lat = lat % 360
+    if lat > 180:
+        lat -= 360
+    if lat > 90:
+        lat = 180 - lat
+    elif lat < -90:
+        lat = -180 - lat
+    return lat
 
 __all__ = [
     "get_phi",
