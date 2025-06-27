@@ -80,82 +80,50 @@ def calc_fuga_x(center_x, fuga_width, i, total_lines):
     return center_x + i * step
 
 
-def draw_mode7_grid(surface, screen_width, screen_height, center_x, horizon_y,
-                    line_color=(100, 150, 200), num_longitudinal=20, num_latitudinal=20,
+def draw_mode7_grid(surface, screen_width, screen_height, center_x, horizon_y, latitude_deg,
+                    line_color, num_longitudinal=20, num_latitudinal=180,
                     apertura_ancho=400, divergence_factor=1.5):
     """
     Dibuja una cuadrícula con:
     - Líneas longitudinales que convergen hacia una 'línea de fuga' horizontal sobre el horizonte
       (líneas paralelas en el horizonte).
-    - Líneas latitudinales horizontales con espaciamiento creciente para efecto perspectiva.
+    - Líneas latitudinales horizontales con espaciamiento creciente para efecto perspectiva,
+      que se extienden hacia arriba y hacia abajo desde una línea base móvil según la latitud.
     """
 
-    # Coordenadas de inicio para líneas longitudinales: distribuidas sobre la línea de fuga
+    # --- Líneas longitudinales (sin cambio) ---
     x_start_linea_fuga = center_x - apertura_ancho / 2
     separacion_lineas = apertura_ancho / num_longitudinal
 
     for i in range(num_longitudinal + 1):
-        # Punto inicial sobre la línea de fuga (horizonte)
         x_start = x_start_linea_fuga + i * separacion_lineas
         y_start = horizon_y
 
-        # Punto final en la base (parte inferior) de la pantalla
-        # Aquí las líneas se abren divergentes multiplicando la distancia horizontal por divergence_factor
         x_offset = (x_start - center_x) * divergence_factor
         x_end = center_x + x_offset
         y_end = screen_height
-
         draw.line(surface, line_color, (x_start, y_start), (x_end, y_end), 1)
 
-    # Líneas latitudinales horizontales (curvas de nivel) con espaciamiento creciente hacia abajo
-    y = horizon_y + 10
+    # --- Líneas latitudinales ---
+    lat_factor = (latitude_deg + 90) / 180  # 0 a 1
+
+    max_shift = 150  # px rango para desplazar línea base arriba/abajo
+
+    # Línea base para las latitudinales, se mueve según latitud
+    base_y = horizon_y - lat_factor * max_shift
+
+    # Espaciado inicial y escalado para efecto perspectiva
     spacing = 10
+
+    # Dibujar líneas hacia abajo desde base_y
+    y = base_y
+    lines_drawn = 0
     for _ in range(num_latitudinal):
-        draw.line(surface, line_color, (0, y), (screen_width, y), 1)
-        spacing *= 1.15  # aumenta separación para efecto perspectiva
+        if y >= horizon_y:  # evitar líneas arriba del horizonte para estas
+            draw.line(surface, line_color, (0, y), (screen_width, y), 2)
+            lines_drawn += 1
+        spacing *= 1.15
         y += spacing
-        if y > screen_height:
-            break
-
-
-# def draw_latitude_perspective_lines(surface, horizon_y, width, height, center_x,
-#                                     line_color=(100, 150, 200), num_lines=10):
-#     # Espacio vertical entre líneas horizontales
-#     line_spacing = (height - horizon_y) / num_lines
-#
-#     fuga_width = width // 2  # Distancia desde el centro hacia cada lado para líneas diagonales
-#
-#     for i in range(1, num_lines + 1):
-#         y = horizon_y + i * line_spacing
-#
-#         # Línea horizontal extendida a todo el ancho (desde 0 hasta width)
-#         draw.line(surface, line_color, (0, y), (width, y), 1)
-#
-#         # Líneas diagonales que van desde los bordes hasta el punto de fuga (center_x, horizon_y)
-#         # Desde borde izquierdo hacia punto de fuga
-#         draw.line(surface, line_color, (0, y), (center_x, horizon_y), 1)
-#         # Desde borde derecho hacia punto de fuga
-#         draw.line(surface, line_color, (width, y), (center_x, horizon_y), 1)
-
-
-# def draw_mode7_grid(surface, latitude, num_lines, width, height, center_x):
-#     """
-#     Dibuja las líneas horizontales que fugan hacia el horizonte.
-#     Parámetros:
-#     - surface: superficie de pygame donde dibujar
-#     - latitude: latitud (no usada aquí, pero la podés usar para efectos futuros)
-#     - num_lines: cantidad de líneas horizontales
-#     - width, height: dimensiones de la pantalla
-#     - center_x: coordenada x del centro (punto de fuga horizontal)
-#     """
-#     color = (100, 150, 200)
-#     line_spacing = (height // 2) // num_lines  # espacio vertical entre líneas
-#     horizon_y = height // 2 + 100  # altura del horizonte, ajustalo si querés
-#
-#     for i in range(num_lines + 1):
-#         y = horizon_y + i * line_spacing
-#         # Línea horizontal extendida de izquierda a derecha
-#         draw.line(surface, color, (0, y), (width, y), 1)
 
 
 __all__ = [
@@ -170,6 +138,5 @@ __all__ = [
     "equation_of_time",
     "small_angle_approximation",
     "equation_of_time_hours",
-    "draw_mode7_grid",
-    # "draw_latitude_perspective_lines"
+    "draw_mode7_grid"
 ]

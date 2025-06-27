@@ -6,7 +6,7 @@ from sun.funciones import *
 from sys import exit
 
 # -------- Parámetros del planeta y observador --------
-latitude_deg = -34.6
+latitude_deg = -34
 obliquity_deg = 23.44
 eccentricity = 0.0167
 orbital_period = 365.25
@@ -116,8 +116,8 @@ while True:
             path.clear()
     draw.rect(screen, (0, 200, 100), (0, horizon_y, width, horizon_y))
     num_lines = max(1, time.get_ticks() // 10 % (height // 20))
-    draw_mode7_grid(screen, width, height, center_x, horizon_y,
-                    line_color=(100, 150, 200), num_longitudinal=30, num_latitudinal=30,
+    draw_mode7_grid(screen, width, height, center_x, horizon_y, latitude_deg,
+                    line_color=[100, 150, 200], num_longitudinal=30, num_latitudinal=30,
                     apertura_ancho=800, divergence_factor=10)
 
     # draw_latitude_perspective_lines(screen, horizon_y, width, height, center_x,
