@@ -1,9 +1,9 @@
-from math import sqrt, sin, cos, tan, asin, acos, atan2, radians, pi
+from math import sqrt, sin, cos, tan, asin, acos, atan2, radians, degrees, pi
 from pygame import draw
 
 
-def get_phi(latitude_deg):
-    return radians(latitude_deg)
+# def get_phi(latitude_deg):
+#     return radians(latitude_deg)
 
 
 def mean_anomaly(day_frac):
@@ -17,8 +17,8 @@ def true_anomaly(m, e):
     return v
 
 
-def solar_longitude(v):
-    return v
+# def solar_longitude(v):
+#     return v
 
 
 def equation_of_time(m, ls, e, obliquity_rad):
@@ -27,11 +27,11 @@ def equation_of_time(m, ls, e, obliquity_rad):
     return e_term + obl_term
 
 
-def equation_of_time_hours(day_of_year):
-    # Parámetros aproximados
-    b = radians((360 / 365) * (day_of_year - 81))
-    eot_minutes = 9.87 * sin(2 * b) - 7.53 * cos(b) - 1.5 * sin(b)
-    return eot_minutes / 60  # convertir minutos a horas
+# def equation_of_time_hours(day_of_year):
+#     # Parámetros aproximados
+#     b = radians((360 / 365) * (day_of_year - 81))
+#     eot_minutes = 9.87 * sin(2 * b) - 7.53 * cos(b) - 1.5 * sin(b)
+#     return eot_minutes / 60  # convertir minutos a horas
 
 
 def declination(ls, obliquity_rad):
@@ -45,7 +45,7 @@ def solar_altitude(latitude, hour_angle, decl):
     return return_value
 
 
-def solar_azimuth(latitude, hour_angle, decl, altitude):
+def _solar_azimuth(latitude, hour_angle, decl, altitude):
     phi = radians(latitude)
     cos_az = (sin(decl) - sin(phi) * sin(altitude)) / (cos(phi) * cos(altitude))
     cos_az = max(-1, min(1, cos_az))
@@ -55,7 +55,7 @@ def solar_azimuth(latitude, hour_angle, decl, altitude):
     return az
 
 
-def small_angle_approximation(radius_km, distance_km):
+def _small_angle_approximation(radius_km, distance_km):
     diameter = 2 * radius_km  # km
     # ángulo aparente en segundos de arco
     angle_arcsec = (diameter * 206265) / distance_km
@@ -66,19 +66,19 @@ def small_angle_approximation(radius_km, distance_km):
 
 def get_solar_xy(latitude, hour_angle, decl, radius=696340, distance=149597870):
     alt = solar_altitude(latitude, hour_angle, decl)
-    solar_radius_rad = small_angle_approximation(radius, distance) / 2  # radio angular (mitad del diámetro angular)
+    solar_radius_rad = _small_angle_approximation(radius, distance) / 2  # radio angular (mitad del diámetro angular)
 
     if alt < -solar_radius_rad:
         return None
-    az = solar_azimuth(latitude, hour_angle, decl, alt)
+    az = _solar_azimuth(latitude, hour_angle, decl, alt)
     x = cos(alt) * sin(az)
     y = sin(alt)
     return x, y
 
 
-def calc_fuga_x(center_x, fuga_width, i, total_lines):
-    step = fuga_width / (total_lines / 2)
-    return center_x + i * step
+# def calc_fuga_x(center_x, fuga_width, i, total_lines):
+#     step = fuga_width / (total_lines / 2)
+#     return center_x + i * step
 
 
 def draw_mode7_grid(surface, screen_width, screen_height, center_x, horizon_y, latitude_deg,
@@ -116,6 +116,35 @@ def draw_mode7_grid(surface, screen_width, screen_height, center_x, horizon_y, l
             draw.line(surface, line_color, (0, y), (screen_width, y), 2)
 
 
+def interpolate_color(c1, c2, t):
+    return (
+        int(c1[0] * (1 - t) + c2[0] * t),
+        int(c1[1] * (1 - t) + c2[1] * t),
+        int(c1[2] * (1 - t) + c2[2] * t)
+    )
+
+
+def draw_dynamic_sky(surface, altura, width, height, dy):
+    alt_deg = degrees(altura)
+    if alt_deg <= -6:
+        top, bottom = (5, 5, 20), (10, 10, 30)
+    elif -6 < alt_deg <= 5:
+        mix = (alt_deg + 6) / 11
+        top = interpolate_color((5, 5, 20), (200, 100, 50), mix)
+        bottom = interpolate_color((10, 10, 30), (255, 120, 60), mix)
+    elif 5 < alt_deg <= 30:
+        mix = (alt_deg - 5) / 25
+        top = interpolate_color((200, 100, 50), (100, 160, 255), mix)
+        bottom = interpolate_color((255, 120, 60), (180, 220, 255), mix)
+    else:
+        top, bottom = (100, 160, 255), (180, 220, 255)
+    for cy in range(height):
+        ratio = dy / height
+        r = int(top[0] * (1 - ratio) + bottom[0] * ratio)
+        g = int(top[1] * (1 - ratio) + bottom[1] * ratio)
+        b = int(top[2] * (1 - ratio) + bottom[2] * ratio)
+        draw.line(surface, (r, g, b), (0, cy), (width, cy))
+
 
 def normalize_latitude(lat):
     lat = lat % 360
@@ -127,18 +156,15 @@ def normalize_latitude(lat):
         lat = -180 - lat
     return lat
 
+
 __all__ = [
-    "get_phi",
     "get_solar_xy",
     "mean_anomaly",
     "true_anomaly",
-    "solar_longitude",
-    "solar_azimuth",
     "solar_altitude",
     "declination",
     "equation_of_time",
-    "small_angle_approximation",
-    "equation_of_time_hours",
     "draw_mode7_grid",
-    "normalize_latitude"
+    "normalize_latitude",
+    "draw_dynamic_sky"
 ]

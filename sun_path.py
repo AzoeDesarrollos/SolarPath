@@ -1,7 +1,7 @@
 from pygame import init as pg_init, quit as pg_quit, display, time, font, draw, event
 from pygame import KEYDOWN, KEYUP, QUIT, K_SPACE, K_a, K_r, K_UP, K_DOWN, K_RIGHT, K_LEFT, K_ESCAPE
 from sun.planet_time import PlanetTime
-from math import radians, degrees, pi
+from math import radians, pi
 from sun.funciones import *
 from sys import exit
 
@@ -14,9 +14,9 @@ orbital_period = 365.25
 sky_radius_px = 400
 
 # -------- Visualización --------
-width, height = 900, 700
+width, height = 800, 600
 center_x, center_y = width // 2, height // 2 + 100
-radius = 400
+# radius = 400
 
 # -------- Inicialización pygame --------
 pg_init()
@@ -29,38 +29,6 @@ planet_time = PlanetTime()
 epsilon = radians(obliquity_deg)
 show_arc = False
 path = []
-prev_day = -1
-
-
-def interpolate_color(c1, c2, t):
-    return (
-        int(c1[0] * (1 - t) + c2[0] * t),
-        int(c1[1] * (1 - t) + c2[1] * t),
-        int(c1[2] * (1 - t) + c2[2] * t)
-    )
-
-
-def draw_dynamic_sky(surface, altura):
-    alt_deg = degrees(altura)
-    if alt_deg <= -6:
-        top, bottom = (5, 5, 20), (10, 10, 30)
-    elif -6 < alt_deg <= 5:
-        mix = (alt_deg + 6) / 11
-        top = interpolate_color((5, 5, 20), (200, 100, 50), mix)
-        bottom = interpolate_color((10, 10, 30), (255, 120, 60), mix)
-    elif 5 < alt_deg <= 30:
-        mix = (alt_deg - 5) / 25
-        top = interpolate_color((200, 100, 50), (100, 160, 255), mix)
-        bottom = interpolate_color((255, 120, 60), (180, 220, 255), mix)
-    else:
-        top, bottom = (100, 160, 255), (180, 220, 255)
-    for cy in range(height):
-        ratio = dy / height
-        r = int(top[0] * (1 - ratio) + bottom[0] * ratio)
-        g = int(top[1] * (1 - ratio) + bottom[1] * ratio)
-        b = int(top[2] * (1 - ratio) + bottom[2] * ratio)
-        draw.line(surface, (r, g, b), (0, cy), (width, cy))
-
 
 # -------- Bucle principal --------
 delta_time = 0
@@ -117,19 +85,17 @@ while True:
     current_day = planet_time.get_current_day()
     day_frac = current_day / orbital_period
     m = mean_anomaly(day_frac)
-    v = true_anomaly(m, eccentricity)
-    ls = solar_longitude(v)
+    ls = true_anomaly(m, eccentricity)
     decl = declination(ls, epsilon)
     eot = equation_of_time(m, ls, eccentricity, epsilon)
 
-    if planet_time.real_time_mode:
-        hour_angle = planet_time.get_hour_angle()  # Ya incluye la hora local
-    else:
+    hour_angle = planet_time.get_hour_angle()  # Ya incluye la hora local
+    if not planet_time.real_time_mode:
         hour_angle = planet_time.get_hour_angle() - eot  # Solo se corrige en modo simulado
     result = get_solar_xy(latitude_deg, hour_angle, decl)
     altitude = solar_altitude(latitude_deg, hour_angle, decl)
 
-    draw_dynamic_sky(screen, altitude)
+    draw_dynamic_sky(screen, altitude, width, height, dy)
 
     if show_arc and len(path) > 1:
         draw.lines(screen, (255, 200, 0), False, path, 2)
