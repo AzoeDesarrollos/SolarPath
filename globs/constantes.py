@@ -1,0 +1,2 @@
+UTC_OFFSET_HOURS = -3  # para Argentina
+WIDTH, HEIGHT = 800, 600

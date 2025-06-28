@@ -1,4 +1,5 @@
 from math import sqrt, sin, cos, tan, asin, acos, atan2, radians, degrees, pi
+from globs import WIDTH, HEIGHT
 from pygame import draw
 
 
@@ -64,9 +65,10 @@ def _small_angle_approximation(radius_km, distance_km):
     return angle_rad
 
 
-def get_solar_xy(latitude, hour_angle, decl, radius=696340, distance=149597870):
+def get_solar_xy(latitude, hour_angle, decl, star, distance=149597870):
     alt = solar_altitude(latitude, hour_angle, decl)
-    solar_radius_rad = _small_angle_approximation(radius, distance) / 2  # radio angular (mitad del diámetro angular)
+    solar_radius_rad = _small_angle_approximation(star.radius, distance) / 2
+    # radio angular (mitad del diámetro angular)
 
     if alt < -solar_radius_rad:
         return None
@@ -81,39 +83,38 @@ def get_solar_xy(latitude, hour_angle, decl, radius=696340, distance=149597870):
 #     return center_x + i * step
 
 
-def draw_mode7_grid(surface, screen_width, screen_height, center_x, horizon_y, latitude_deg,
-                    line_color, num_longitudinal=20, num_latitudinal=180,
-                    apertura_ancho=400, divergence_factor=1.5):
-    # --- Líneas longitudinales (sin cambios) ---
-    x_start_linea_fuga = center_x - apertura_ancho / 2
-    separacion_lineas = apertura_ancho / num_longitudinal
-
-    for i in range(num_longitudinal + 1):
-        x_start = x_start_linea_fuga + i * separacion_lineas
-        y_start = horizon_y
-
-        x_offset = (x_start - center_x) * divergence_factor
-        x_end = center_x + x_offset
-        y_end = screen_height
-        draw.line(surface, line_color, (x_start, y_start), (x_end, y_end), 1)
-
-    # --- Líneas latitudinales ---
-    # Definir espaciado fijo entre líneas
-    spacing = 20  # espaciado constante, NO creciente
-
-    # Convertir latitud a factor de desplazamiento
-    lat_factor = (latitude_deg + 90) / 180  # de 0 (sur) a 1 (norte)
-    max_shift = 400
-    shift = (lat_factor - 0.5) * 2 * max_shift  # -400 a +400
-
-    # Centrar la grilla en la línea del horizonte + shift
-    base_y = horizon_y + shift
-
-    # Generar muchas líneas alrededor de base_y, hacia arriba y abajo
-    for i in range(-num_latitudinal // 2, num_latitudinal // 2 + 1):
-        y = base_y + i * spacing
-        if horizon_y <= y <= screen_height:
-            draw.line(surface, line_color, (0, y), (screen_width, y), 2)
+# def draw_mode7_grid(surface, center_x, horizon_y, latitude_deg,
+#                     num_longitudinal=30, num_latitudinal=180,
+#                     apertura_ancho=800, divergence_factor=10):
+#     # --- Líneas longitudinales (sin cambios) ---
+#     # center_x - apertura_ancho / 2 = x_start_linea_fuga
+#     # apertura_ancho / num_longitudinal = separacion_lineas
+#
+#     line_color = 100, 150, 200
+#     for i in range(num_longitudinal + 1):
+#         x_start = (center_x - apertura_ancho / 2) + i * (apertura_ancho / num_longitudinal)
+#
+#         x_offset = (x_start - center_x) * divergence_factor
+#         x_end = center_x + x_offset
+#         draw.line(surface, line_color, (x_start, horizon_y), (x_end, HEIGHT), 1)
+#
+#     # --- Líneas latitudinales ---
+#     # Definir espaciado fijo entre líneas
+#     spacing = 20  # espaciado constante, NO creciente
+#
+#     # Convertir latitud a factor de desplazamiento
+#     lat_factor = (latitude_deg + 90) / 180  # de 0 (sur) a 1 (norte)
+#     max_shift = 400
+#     shift = (lat_factor - 0.5) * 2 * max_shift  # -400 a +400
+#
+#     # Centrar la grilla en la línea del horizonte + shift
+#     base_y = horizon_y + shift
+#
+#     # Generar muchas líneas alrededor de base_y, hacia arriba y abajo
+#     for i in range(-num_latitudinal // 2, num_latitudinal // 2 + 1):
+#         y = base_y + i * spacing
+#         if horizon_y <= y <= HEIGHT:
+#             draw.line(surface, line_color, (0, y), (WIDTH, y), 2)
 
 
 def interpolate_color(c1, c2, t):
@@ -124,7 +125,7 @@ def interpolate_color(c1, c2, t):
     )
 
 
-def draw_dynamic_sky(surface, altura, width, height, dy):
+def draw_dynamic_sky(surface, altura, dy):
     alt_deg = degrees(altura)
     if alt_deg <= -6:
         top, bottom = (5, 5, 20), (10, 10, 30)
@@ -138,12 +139,12 @@ def draw_dynamic_sky(surface, altura, width, height, dy):
         bottom = interpolate_color((255, 120, 60), (180, 220, 255), mix)
     else:
         top, bottom = (100, 160, 255), (180, 220, 255)
-    for cy in range(height):
-        ratio = dy / height
+    for cy in range(HEIGHT):
+        ratio = dy / HEIGHT
         r = int(top[0] * (1 - ratio) + bottom[0] * ratio)
         g = int(top[1] * (1 - ratio) + bottom[1] * ratio)
         b = int(top[2] * (1 - ratio) + bottom[2] * ratio)
-        draw.line(surface, (r, g, b), (0, cy), (width, cy))
+        draw.line(surface, (r, g, b), (0, cy), (WIDTH, cy))
 
 
 def normalize_latitude(lat):
@@ -164,7 +165,6 @@ __all__ = [
     "solar_altitude",
     "declination",
     "equation_of_time",
-    "draw_mode7_grid",
     "normalize_latitude",
     "draw_dynamic_sky"
 ]

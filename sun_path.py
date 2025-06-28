@@ -1,34 +1,34 @@
 from pygame import init as pg_init, quit as pg_quit, display, time, font, draw, event
 from pygame import KEYDOWN, KEYUP, QUIT, K_SPACE, K_a, K_r, K_UP, K_DOWN, K_RIGHT, K_LEFT, K_ESCAPE
-from sun.planet_time import PlanetTime
-from math import radians, pi
-from sun.funciones import *
+from math import pi
 from sys import exit
+from globs import *
+from sun import *
 
 # -------- Parámetros del planeta y observador --------
 latitude_deg = -34
 longitude_deg = 0
-obliquity_deg = 23.44
-eccentricity = 0.0167
-orbital_period = 365.25
 sky_radius_px = 400
 
 # -------- Visualización --------
-width, height = 800, 600
-center_x, center_y = width // 2, height // 2 + 100
+
+center_x, center_y = WIDTH // 2, HEIGHT // 2 + 100
+horizon_y = center_y
 # radius = 400
 
 # -------- Inicialización pygame --------
 pg_init()
-screen = display.set_mode((width, height))
+screen = display.set_mode((WIDTH, HEIGHT))
 display.set_caption("Movimiento Solar Anual")
 clock = time.Clock()
 fuente = font.SysFont(None, 24)
 
-planet_time = PlanetTime()
-epsilon = radians(obliquity_deg)
+planet = Planet(center_y)
+star = Star(8)
+
 show_arc = False
 path = []
+font_large = font.SysFont(None, 28)
 
 # -------- Bucle principal --------
 delta_time = 0
@@ -42,9 +42,9 @@ while True:
             if e.key == K_a:
                 show_arc = not show_arc
             elif e.key == K_SPACE:
-                planet_time.time_speed = 0 if planet_time.time_speed > 0 else 3
+                planet.time_speed = 0 if planet.time_speed > 0 else 3
             elif e.key == K_r:
-                planet_time.toggle_mode()
+                planet.toggle_mode()
             elif e.key == K_UP:
                 dy += 1
             elif e.key == K_DOWN:
@@ -77,25 +77,22 @@ while True:
     # elif latitude_deg < -180:
     #     latitude_deg += 360
 
-    horizon_y = center_y
-    font_large = font.SysFont(None, 28)
     east_text = font_large.render("Este", True, (0, 0, 0))
     west_text = font_large.render("Oeste", True, (0, 0, 0))
 
-    current_day = planet_time.get_current_day()
-    day_frac = current_day / orbital_period
-    m = mean_anomaly(day_frac)
-    ls = true_anomaly(m, eccentricity)
-    decl = declination(ls, epsilon)
-    eot = equation_of_time(m, ls, eccentricity, epsilon)
+    current_day = planet.get_current_day()
+    m = mean_anomaly(current_day / planet.orbital_period)
+    ls = true_anomaly(m, planet.eccentricity)
+    decl = declination(ls, planet.epsilon)
+    eot = equation_of_time(m, ls, planet.eccentricity, planet.epsilon)
 
-    hour_angle = planet_time.get_hour_angle()  # Ya incluye la hora local
-    if not planet_time.real_time_mode:
-        hour_angle = planet_time.get_hour_angle() - eot  # Solo se corrige en modo simulado
-    result = get_solar_xy(latitude_deg, hour_angle, decl)
+    hour_angle = planet.get_hour_angle()  # Ya incluye la hora local
+    if not planet.real_time_mode:
+        hour_angle = planet.get_hour_angle() - eot  # Solo se corrige en modo simulado
+    result = get_solar_xy(latitude_deg, hour_angle, decl, star)
     altitude = solar_altitude(latitude_deg, hour_angle, decl)
 
-    draw_dynamic_sky(screen, altitude, width, height, dy)
+    draw_dynamic_sky(screen, altitude, dy)
 
     if show_arc and len(path) > 1:
         draw.lines(screen, (255, 200, 0), False, path, 2)
@@ -110,13 +107,9 @@ while True:
     else:
         if show_arc:
             path.clear()
-    draw.rect(screen, (0, 200, 100), (0, horizon_y, width, horizon_y))
-    num_lines = max(1, time.get_ticks() // 10 % (height // 20))
-    draw_mode7_grid(screen, width, height, center_x, horizon_y, latitude_deg,
-                    line_color=[100, 150, 200], num_longitudinal=30,
-                    apertura_ancho=800, divergence_factor=10)
+    screen.blit(planet.draw(center_x, latitude_deg), planet.rect)
 
-    screen.blit(east_text, (width - 70, horizon_y + 10))
+    screen.blit(east_text, (WIDTH - 70, horizon_y + 10))
     screen.blit(west_text, (10, horizon_y + 10))
 
     # Hora solar estimada
@@ -126,10 +119,10 @@ while True:
     minutes = int((solar_hour - hours) * 60)
     abs_lat = abs(latitude_deg % 360)
     lat_display = normalize_latitude(latitude_deg)
-    day_text = fuente.render(f"Día del año: {current_day} / {int(orbital_period)}", True, (255, 255, 255))
+    day_text = fuente.render(f"Día del año: {current_day} / {int(planet.orbital_period)}", True, (255, 255, 255))
     time_text = fuente.render(f"Hora solar: {hours:02d}:{minutes:02d}", True, (255, 255, 255))
     lat_text = fuente.render(f"Latitud: {lat_display:.1f}°", True, (255, 255, 255))
-    mode_text = fuente.render(f"Modo: {'Real' if planet_time.real_time_mode else 'Simulado'}", True, (255, 255, 255))
+    mode_text = fuente.render(f"Modo: {'Real' if planet.real_time_mode else 'Simulado'}", True, (255, 255, 255))
     screen.blit(day_text, (10, 10))
     screen.blit(time_text, (10, 40))
     screen.blit(lat_text, (10, 70))
@@ -138,4 +131,4 @@ while True:
     display.update()
 
     delta_time = clock.tick(60) / 1000
-    planet_time.update(delta_time)
+    planet.update(delta_time)
