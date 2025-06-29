@@ -2,8 +2,8 @@ from pygame import init as pg_init, quit as pg_quit, display, time, font, draw, 
 from pygame import KEYDOWN, KEYUP, QUIT, K_SPACE, K_a, K_r, K_UP, K_DOWN, K_RIGHT, K_LEFT, K_ESCAPE
 from math import pi
 from sys import exit
-from globs import *
-from sun import *
+from engine.globs import *
+from engine.sun import *
 
 # -------- Parámetros del planeta y observador --------
 latitude_deg = -34

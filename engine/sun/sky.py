@@ -1,17 +1,24 @@
+from engine.globs import WIDTH, HEIGHT, Renderer, SpriteHandler
 from pygame.sprite import Sprite
 from pygame import draw, Surface
 from math import degrees
-from globs import WIDTH, HEIGHT
 
 
 class Sky(Sprite):
     is_observer = False
     parent = None
+    name = "Sky"
 
     def __init__(self):
         super().__init__()
-        self.image = Surface([WIDTH, HEIGHT])
+        self.image = Surface([WIDTH, HEIGHT // 2 + 100])
         self.rect = self.image.get_rect()
+
+        Renderer.add_sprite(self)
+        SpriteHandler.add_sprite(self)
+
+    def set_parent(self, parent):
+        self.parent = parent
 
     @staticmethod
     def interpolate_color(c1, c2, t):
@@ -41,3 +48,9 @@ class Sky(Sprite):
             g = int(top[1] * (1 - ratio) + bottom[1] * ratio)
             b = int(top[2] * (1 - ratio) + bottom[2] * ratio)
             draw.line(self.image, (r, g, b), (0, cy), (WIDTH, cy))
+
+    def update(self):
+        pass
+
+
+Sky()

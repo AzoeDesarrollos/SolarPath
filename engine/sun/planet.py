@@ -1,8 +1,7 @@
-from globs.constantes import WIDTH, HEIGHT
-from sun.funciones import *
+from engine.globs import WIDTH, HEIGHT, Renderer, SpriteHandler
 from pygame.sprite import Sprite
 from pygame import Surface, draw
-from math import radians, pi
+from math import radians, pi, asin, sin, cos
 from datetime import datetime
 
 
@@ -13,6 +12,8 @@ class Planet(Sprite):
 
     is_observer = False
     parent = None
+
+    name = "Planet"
 
     def __init__(self, horizon_y):
         super().__init__()
@@ -27,6 +28,12 @@ class Planet(Sprite):
         self.current_time = 0.0
         self.previous_time = 0.0
         self.current_day = 0
+
+        Renderer.add_sprite(self)
+        SpriteHandler.add_sprite(self)
+
+    def set_parent(self, parent):
+        self.parent = parent
 
     @property
     def epsilon(self):
@@ -70,7 +77,7 @@ class Planet(Sprite):
         self.draw_mode7_grid(center_x, latitude_deg)
         return self.image
 
-    def update(self, delta_time, **kwargs):
+    def update_time(self, delta_time):
         self.previous_time = self.current_time
 
         if self.real_time_mode:
@@ -88,16 +95,16 @@ class Planet(Sprite):
 
     def sun_position(self, latitude_deg, star):
         current_day = self.get_current_day()
-        m = mean_anomaly(current_day / self.orbital_period)
-        ls = true_anomaly(m, self.eccentricity)
-        decl = declination(ls, self.epsilon)
-        eot = equation_of_time(m, ls, self.eccentricity, self.epsilon)
+        m = star.mean_anomaly(current_day / self.orbital_period)
+        ls = star.true_anomaly(m, self.eccentricity)
+        decl = star.declination(ls, self.epsilon)
+        eot = star.equation_of_time(m, ls, self.eccentricity, self.epsilon)
 
         hour_angle = self.get_hour_angle()  # Ya incluye la hora local
         if not self.real_time_mode:
             hour_angle = self.get_hour_angle() - eot  # Solo se corrige en modo simulado
-        result = get_solar_xy(latitude_deg, hour_angle, decl, star)
-        altitude = solar_altitude(latitude_deg, hour_angle, decl)
+        result = star.get_solar_xy(latitude_deg, hour_angle, decl, star)
+        altitude = star.solar_altitude(latitude_deg, hour_angle, decl)
         return result, altitude
 
     def get_hour_angle(self):
@@ -108,3 +115,25 @@ class Planet(Sprite):
 
     def toggle_mode(self):
         self.real_time_mode = not self.real_time_mode
+
+    def solar_altitude(self, latitude, hour_angle, decl):
+        latitude = self.normalize_latitude(latitude)
+        phi = radians(latitude)
+        return_value = asin(sin(phi) * sin(decl) + cos(phi) * cos(decl) * cos(hour_angle))
+        return return_value
+
+    @staticmethod
+    def normalize_latitude(lat):
+        lat = lat % 360
+        if lat > 180:
+            lat -= 360
+        if lat > 90:
+            lat = 180 - lat
+        elif lat < -90:
+            lat = -180 - lat
+        return lat
+
+    def update(self):
+        pass
+
+Planet(HEIGHT // 2 + 100)

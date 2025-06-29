@@ -14,10 +14,9 @@ class SpriteHandler:
     def add_sprite(cls, sprite):
         if sprite.is_observer:
             cls.observer = sprite
-            cls.observer.parent = SpriteHandler
-        else:
-            cls.contents.add(sprite)
-            sprite.parent = SpriteHandler
+
+        cls.contents.add(sprite)
+        sprite.set_parent(cls)
 
     @classmethod
     def del_sprite(cls, sprite):
@@ -25,8 +24,13 @@ class SpriteHandler:
             cls.contents.remove(sprite)
 
     @classmethod
+    def get_sprite(cls, name):
+        for sprite in cls.contents.sprites():
+            if sprite.name == name:
+                return sprite
+
+    @classmethod
     def update(cls):
-        delta_time = cls.observer.delta_time
         dx, dy = cls.observer.x, cls.observer.y  # velocidad horizontal y vertical, respectivamente
         for e in event.get([KEYDOWN, KEYUP, QUIT]):
             if (e.type == KEYDOWN and e.key == K_ESCAPE) or e.type == QUIT:
@@ -57,7 +61,7 @@ class SpriteHandler:
         cls.observer.move(dx, dy)
         # latitude_deg += dy * 10 * delta_time
 
-        cls.contents.update(delta_time)
+        cls.contents.update()
 
 
 SpriteHandler.init()
