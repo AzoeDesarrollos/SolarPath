@@ -1,4 +1,5 @@
 from globs.constantes import WIDTH, HEIGHT
+from sun.funciones import *
 from pygame.sprite import Sprite
 from pygame import Surface, draw
 from math import radians, pi
@@ -9,6 +10,9 @@ class Planet(Sprite):
     obliquity_deg = 23.44
     eccentricity = 0.0167
     orbital_period = 365.25
+
+    is_observer = False
+    parent = None
 
     def __init__(self, horizon_y):
         super().__init__()
@@ -81,6 +85,20 @@ class Planet(Sprite):
             self.current_time = ((self.current_time + pi) % (2 * pi)) - pi
             if self.current_time < self.previous_time:
                 self.current_day = (self.current_day + 1) % int(self.orbital_period)
+
+    def sun_position(self, latitude_deg, star):
+        current_day = self.get_current_day()
+        m = mean_anomaly(current_day / self.orbital_period)
+        ls = true_anomaly(m, self.eccentricity)
+        decl = declination(ls, self.epsilon)
+        eot = equation_of_time(m, ls, self.eccentricity, self.epsilon)
+
+        hour_angle = self.get_hour_angle()  # Ya incluye la hora local
+        if not self.real_time_mode:
+            hour_angle = self.get_hour_angle() - eot  # Solo se corrige en modo simulado
+        result = get_solar_xy(latitude_deg, hour_angle, decl, star)
+        altitude = solar_altitude(latitude_deg, hour_angle, decl)
+        return result, altitude
 
     def get_hour_angle(self):
         return self.current_time

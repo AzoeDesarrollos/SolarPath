@@ -92,7 +92,7 @@ while True:
     result = get_solar_xy(latitude_deg, hour_angle, decl, star)
     altitude = solar_altitude(latitude_deg, hour_angle, decl)
 
-    draw_dynamic_sky(screen, altitude, dy)
+    # draw_dynamic_sky(screen, altitude, dy)
 
     if show_arc and len(path) > 1:
         draw.lines(screen, (255, 200, 0), False, path, 2)

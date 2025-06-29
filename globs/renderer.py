@@ -25,5 +25,7 @@ class Renderer:
     def update(cls):
         cls.contents.draw(cls.screen)
 
+        display.update()
+
 
 Renderer.init()

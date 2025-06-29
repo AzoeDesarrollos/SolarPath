@@ -1,6 +1,8 @@
-from math import sqrt, sin, cos, tan, asin, acos, atan2, radians, degrees, pi
-from globs import WIDTH, HEIGHT
-from pygame import draw
+from math import sqrt, sin, cos, tan, asin, acos, atan2, radians, pi
+
+
+# from globs import WIDTH, HEIGHT
+# from pygame import draw
 
 
 # def get_phi(latitude_deg):
@@ -117,34 +119,34 @@ def get_solar_xy(latitude, hour_angle, decl, star, distance=149597870):
 #             draw.line(surface, line_color, (0, y), (WIDTH, y), 2)
 
 
-def interpolate_color(c1, c2, t):
-    return (
-        int(c1[0] * (1 - t) + c2[0] * t),
-        int(c1[1] * (1 - t) + c2[1] * t),
-        int(c1[2] * (1 - t) + c2[2] * t)
-    )
-
-
-def draw_dynamic_sky(surface, altura, dy):
-    alt_deg = degrees(altura)
-    if alt_deg <= -6:
-        top, bottom = (5, 5, 20), (10, 10, 30)
-    elif -6 < alt_deg <= 5:
-        mix = (alt_deg + 6) / 11
-        top = interpolate_color((5, 5, 20), (200, 100, 50), mix)
-        bottom = interpolate_color((10, 10, 30), (255, 120, 60), mix)
-    elif 5 < alt_deg <= 30:
-        mix = (alt_deg - 5) / 25
-        top = interpolate_color((200, 100, 50), (100, 160, 255), mix)
-        bottom = interpolate_color((255, 120, 60), (180, 220, 255), mix)
-    else:
-        top, bottom = (100, 160, 255), (180, 220, 255)
-    for cy in range(HEIGHT):
-        ratio = dy / HEIGHT
-        r = int(top[0] * (1 - ratio) + bottom[0] * ratio)
-        g = int(top[1] * (1 - ratio) + bottom[1] * ratio)
-        b = int(top[2] * (1 - ratio) + bottom[2] * ratio)
-        draw.line(surface, (r, g, b), (0, cy), (WIDTH, cy))
+# def interpolate_color(c1, c2, t):
+#     return (
+#         int(c1[0] * (1 - t) + c2[0] * t),
+#         int(c1[1] * (1 - t) + c2[1] * t),
+#         int(c1[2] * (1 - t) + c2[2] * t)
+#     )
+#
+#
+# def draw_dynamic_sky(surface, altura, dy):
+#     alt_deg = degrees(altura)
+#     if alt_deg <= -6:
+#         top, bottom = (5, 5, 20), (10, 10, 30)
+#     elif -6 < alt_deg <= 5:
+#         mix = (alt_deg + 6) / 11
+#         top = interpolate_color((5, 5, 20), (200, 100, 50), mix)
+#         bottom = interpolate_color((10, 10, 30), (255, 120, 60), mix)
+#     elif 5 < alt_deg <= 30:
+#         mix = (alt_deg - 5) / 25
+#         top = interpolate_color((200, 100, 50), (100, 160, 255), mix)
+#         bottom = interpolate_color((255, 120, 60), (180, 220, 255), mix)
+#     else:
+#         top, bottom = (100, 160, 255), (180, 220, 255)
+#     for cy in range(HEIGHT):
+#         ratio = dy / HEIGHT
+#         r = int(top[0] * (1 - ratio) + bottom[0] * ratio)
+#         g = int(top[1] * (1 - ratio) + bottom[1] * ratio)
+#         b = int(top[2] * (1 - ratio) + bottom[2] * ratio)
+#         draw.line(surface, (r, g, b), (0, cy), (WIDTH, cy))
 
 
 def normalize_latitude(lat):
@@ -165,6 +167,5 @@ __all__ = [
     "solar_altitude",
     "declination",
     "equation_of_time",
-    "normalize_latitude",
-    "draw_dynamic_sky"
+    "normalize_latitude"
 ]

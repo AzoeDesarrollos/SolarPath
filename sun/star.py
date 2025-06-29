@@ -3,6 +3,8 @@ from pygame import Surface, SRCALPHA, draw
 
 class Star(Sprite):
     radius = 696340
+    is_observer = False
+    parent = None
 
     def __init__(self, radius):
         super().__init__()

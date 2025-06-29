@@ -4,13 +4,20 @@ from pygame.sprite import LayeredUpdates
 
 
 class SpriteHandler:
+    observer = None
+
     @classmethod
     def init(cls):
         cls.contents = LayeredUpdates()
 
     @classmethod
     def add_sprite(cls, sprite):
-        cls.contents.add(sprite)
+        if sprite.is_observer:
+            cls.observer = sprite
+            cls.observer.parent = SpriteHandler
+        else:
+            cls.contents.add(sprite)
+            sprite.parent = SpriteHandler
 
     @classmethod
     def del_sprite(cls, sprite):
@@ -19,8 +26,8 @@ class SpriteHandler:
 
     @classmethod
     def update(cls):
-        delta_time = 0
-        dx, dy = 0, 0  # velocidad horizontal y vertical, respectivamente
+        delta_time = cls.observer.delta_time
+        dx, dy = cls.observer.x, cls.observer.y  # velocidad horizontal y vertical, respectivamente
         for e in event.get([KEYDOWN, KEYUP, QUIT]):
             if (e.type == KEYDOWN and e.key == K_ESCAPE) or e.type == QUIT:
                 pg_quit()
@@ -46,6 +53,9 @@ class SpriteHandler:
                     dy = 0
                 elif e.key in (K_LEFT, K_RIGHT):
                     dx = 0
+
+        cls.observer.move(dx, dy)
+        # latitude_deg += dy * 10 * delta_time
 
         cls.contents.update(delta_time)
 
