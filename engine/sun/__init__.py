@@ -1,4 +1,5 @@
-from .planet import Planet
+from .sky import Sky
 from .star import Star
 from .observer import Observer
-from .sky import Sky
+from .planet import Planet
+from .mapa import Mapa

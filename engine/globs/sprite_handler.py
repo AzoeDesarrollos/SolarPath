@@ -1,5 +1,5 @@
 from pygame import KEYDOWN, KEYUP, QUIT, K_UP, K_DOWN, K_RIGHT, K_LEFT, K_ESCAPE
-from pygame import quit as pg_quit, event
+from pygame import quit as pg_quit, event, time
 from pygame.sprite import LayeredUpdates
 
 
@@ -9,6 +9,7 @@ class SpriteHandler:
     @classmethod
     def init(cls):
         cls.contents = LayeredUpdates()
+        cls.clock = time.Clock()
 
     @classmethod
     def add_sprite(cls, sprite):
@@ -31,7 +32,7 @@ class SpriteHandler:
 
     @classmethod
     def update(cls):
-        dx, dy = cls.observer.x, cls.observer.y  # velocidad horizontal y vertical, respectivamente
+        delta_time = cls.clock.tick(60) / 1000
         for e in event.get([KEYDOWN, KEYUP, QUIT]):
             if (e.type == KEYDOWN and e.key == K_ESCAPE) or e.type == QUIT:
                 pg_quit()
@@ -44,23 +45,19 @@ class SpriteHandler:
                 # elif e.key == K_r:
                 #     planet_time.toggle_mode()
                 if e.key == K_UP:
-                    dy += 1
+                    cls.observer.moverse(0, 1)
                 elif e.key == K_DOWN:
-                    dy -= 1
+                    cls.observer.moverse(0, -1)
                 elif e.key == K_RIGHT:
-                    dx += 1
+                    cls.observer.moverse(1, 0)
                 elif e.key == K_LEFT:
-                    dx -= 1
+                    cls.observer.moverse(1, 0)
 
             elif e.type == KEYUP:
-                if e.key in (K_UP, K_DOWN):
-                    dy = 0
-                elif e.key in (K_LEFT, K_RIGHT):
-                    dx = 0
+                if e.key in (K_UP, K_DOWN, K_LEFT, K_RIGHT):
+                    cls.observer.moverse(0, 0)
 
-        cls.observer.move(dx, dy)
-        # latitude_deg += dy * 10 * delta_time
-
+        cls.observer.move(delta_time)
         cls.contents.update()
 
 
